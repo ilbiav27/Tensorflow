@@ -7,8 +7,10 @@ import time
 from six.moves import xrange    #...?
 import math
 tf.set_random_seed(777)  # reproducibility
+
 #filenamequeue = tf.train.string_input_producer([os.path.join('.','cifar_data','data_batch_1.bin')])
 #testnamequeue = tf.train.string_input_producer([os.path.join('.','cifar_data','test_batch.bin')])
+
 imagesize = 32
 image_NUM = 50000
 test_NUM = 10000
