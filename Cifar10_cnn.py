@@ -32,7 +32,7 @@ def _generate_image_and_label_batch(image, label, min_queue_examples,
         num_threads=num_preprocess_threads,
         capacity=min_queue_examples + 3 * batch_size)
     tf.summary.image('images', images)
-    # 배치 과정을 거친 이미지와 라벨의 최종 shape는 각각 [100, 32, 32, 3]과 [100]
+
     return images, tf.reshape(label_batch, [batch_size])
 
 def read_cifar10(filename_queue):
@@ -232,90 +232,6 @@ def training():
                      log_device_placement=False)) as mon_sess:
              while not mon_sess.should_stop():
                mon_sess.run(train_op)
-             #if mon_sess.should_stop():
-             #    evaluate()
-
-def eval_once(saver, summary_writer, top_k_op, summary_op):
-  """Run Eval once.
-
-  Args:
-    saver: Saver.
-    summary_writer: Summary writer.
-    top_k_op: Top K op.
-    summary_op: Summary op.
-  """
-  with tf.Session() as sess:
-    ckpt = tf.train.get_checkpoint_state(train_dir)
-    if ckpt and ckpt.model_checkpoint_path:
-      # Restores from checkpoint
-      saver.restore(sess, ckpt.model_checkpoint_path)
-      # Assuming model_checkpoint_path looks something like:
-      #   /my-favorite-path/cifar10_train/model.ckpt-0,
-      # extract global_step from it.
-      global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
-    else:
-      print('No checkpoint file found')
-      return
-
-    # Start the queue runners.
-    coord = tf.train.Coordinator()
-    try:
-      threads = []
-      for qr in tf.get_collection(tf.GraphKeys.QUEUE_RUNNERS):
-        threads.extend(qr.create_threads(sess, coord=coord, daemon=True,
-                                         start=True))
-      num_iter = int(math.ceil(test_NUM / batch_SIZE))
-      true_count = 0  # Counts the number of correct predictions.
-      total_sample_count = num_iter * batch_SIZE
-      step = 0
-      while step < num_iter and not coord.should_stop():
-        predictions = sess.run([top_k_op])
-        true_count += np.sum(predictions)
-        step += 1
-
-      # Compute precision @ 1.
-      precision = true_count / total_sample_count
-      print('%s: precision @ 1 = %.3f' % (datetime.now(), precision))
-
-      summary = tf.Summary()
-      summary.ParseFromString(sess.run(summary_op))
-      summary.value.add(tag='Precision @ 1', simple_value=precision)
-      summary_writer.add_summary(summary, global_step)
-    except Exception as e:  # pylint: disable=broad-except
-        coord.request_stop(e)
-    coord.request_stop()
-    coord.join(threads, stop_grace_period_secs=10)
-
-def evaluate():
-  """Eval CIFAR-10 for a number of steps."""
-  with tf.Graph().as_default() as g:
-    # Get images and labels for CIFAR-10.
-    testnamequeue = tf.train.string_input_producer([os.path.join(data_dir, 'test_batch.bin')])
-    images, labels = read_cifar10(testnamequeue)
-    images, labels = _generate_image_and_label_batch(images, labels,4000, batch_SIZE,False)
-
-    # Build a Graph that computes the logits predictions from the
-    # inference model.
-    logits = Model.inference(images)
-
-    # Calculate predictions.
-    top_k_op = tf.nn.in_top_k(logits, labels, 1)
-
-    # Restore the moving average version of the learned variables for eval.
-    variable_averages = tf.train.ExponentialMovingAverage(
-        0.9999)
-    variables_to_restore = variable_averages.variables_to_restore()
-    saver = tf.train.Saver(variables_to_restore)
-
-    # Build the summary operation based on the TF collection of Summaries.
-
-    summary_op = tf.summary.merge_all()
-
-    summary_writer = tf.summary.FileWriter(eval_dir, g)
-
-    while True:
-      eval_once(saver, summary_writer, top_k_op, summary_op)
-      time.sleep(60 * 5)
 
 def main(argv=None):  # pylint: disable=unused-argument
   training()
@@ -324,27 +240,3 @@ if __name__ == '__main__':
     print("Let's get started")
     print(datetime.now())
     tf.app.run()
-
-'''
-with tf.Session() as sess:
-    with tf.device('/cpu:0'):
-        images, labels = read_cifar10(filenamequeue)
-
-    batch = int(image_NUM/batch_SIZE)
-    print(datetime.now(),'Start to learn!')
-      for i in range(training_epochs):
-        true_count = 0
-        avg = 0
-        for j in range(batch):
-            images_d, labels_d = _generate_image_and_label_batch(images, labels, int(image_NUM * 0.4), batch_SIZE,
-                                                                 shuffle=False)
-            logits= Model.inference(images_d, labels_d)
-            top_k_op = tf.nn.in_top_k(logits, labels_d, 1)
-            sess.run(tf.global_variables_initializer())
-            coord = tf.train.Coordinator()
-            threads = tf.train.start_queue_runners(sess=sess, collection=tf.GraphKeys.QUEUE_RUNNERS, coord=coord)
-            true_count += np.sum(sess.run([top_k_op]))
-        coord.request_stop()
-        coord.join(threads)
-        print(datetime.now(),'cost = ',cost,'accuracy = ',true_count/image_NUM)
-    '''
