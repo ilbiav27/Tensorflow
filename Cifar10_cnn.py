@@ -4,7 +4,7 @@ import numpy as np
 
 from datetime import datetime
 import time
-from six.moves import xrange    #...?
+from six.moves import xrange
 import math
 tf.set_random_seed(777)  # reproducibility
 
@@ -168,8 +168,6 @@ def train(total_loss, global_step):
     train_op = tf.no_op(name='train')
 
   return train_op
-
-
 
 def training():
     with tf.Graph().as_default():
