@@ -6,9 +6,10 @@
 # Visualization
 # Prepare
 
-You need vgg16.npy File.
-Test Images are in 'TestImage' Directory.
-The result visualization file will be in 'filter' Directory.
+  You need vgg16.npy File.
+  Test Images are in 'TestImage' Directory.
+  The result visualization file will be in 'filter' Directory.
+  
 # Procedure
 
   If you are Ready for Running,
