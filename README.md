@@ -1,6 +1,6 @@
 
 # Tensorflow
-  It's written by Tensorflow
+  It's written in Tensorflow
 # Vgg
 # Transfer Learning
 
